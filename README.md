@@ -13,8 +13,6 @@ Google Generative AI (Gemini API)
 
 Jupyter Notebook
 
-(Optional) pyshark for advanced pcap parsing
-
 Features
 
 Automated loading and preprocessing of network traffic data (CSV format)
