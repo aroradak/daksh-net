@@ -1,34 +1,26 @@
+Here is your code with all comments removed, as requested:
+
+```python
 import pandas as pd
 import google.generativeai as genai
 import json
 import os
 from datetime import datetime
 
-# Function to initialize Gemini API
 def init_gemini(api_key):
     genai.configure(api_key=api_key)
     return genai.GenerativeModel("gemini-1.5-flash")
 
-# Function to load and preprocess network traffic data
 def load_data(file_path):
-    # Detect file format and load accordingly
     if file_path.endswith('.csv'):
-        # For CSV files with the format shown in your example
         df = pd.read_csv(file_path)
     else:
-        # For pcap files, you'd need additional libraries like pyshark
-        # This is a placeholder - you would need to implement actual pcap parsing
         raise ValueError("Currently only CSV files are supported")
-    
-    # Clean up column names if necessary
     if '"Time"' in df.columns:
         df.columns = [col.strip('"') for col in df.columns]
-    
     return df
 
-# Function to extract features and context from network data
 def extract_features(df):
-    # Basic statistics
     stats = {
         "total_packets": len(df),
         "unique_sources": df['Source'].nunique(),
@@ -36,44 +28,33 @@ def extract_features(df):
         "protocols": df['Protocol'].value_counts().to_dict(),
         "time_span": float(df['Time'].max()) - float(df['Time'].min())
     }
-    
-    # Check for broadcast/multicast communication
     broadcast_count = df[df['Destination'].str.contains('255.255|Broadcast', na=False)].shape[0]
     stats["broadcast_percentage"] = (broadcast_count / len(df)) * 100
-    
-    # ARP analysis (often used in network scanning)
     arp_requests = df[df['Protocol'] == 'ARP'].shape[0]
     stats["arp_percentage"] = (arp_requests / len(df)) * 100
-    
-    # NBNS (NetBIOS Name Service) analysis
     nbns_requests = df[df['Protocol'] == 'NBNS'].shape[0]
     stats["nbns_percentage"] = (nbns_requests / len(df)) * 100
-    
-    # Repeated queries analysis
     source_dest_counts = df.groupby(['Source', 'Destination']).size().reset_index(name='count')
     repeated_comms = source_dest_counts[source_dest_counts['count'] > 1].shape[0]
     stats["repeated_communications"] = repeated_comms
-    
     return stats
 
-# Function to detect potential anomalies using Gemini
 def detect_anomalies(model, df, features):
-    # Create a context prompt for the LLM with network security expertise
     prompt = f"""
     You are a network security expert analyzing network traffic for anomalies and potential security threats.
-    
+
     Here's the network traffic data statistics:
     {json.dumps(features, indent=2)}
-    
+
     Here are the first few packet records:
     {df.head(10).to_string()}
-    
+
     Based on this information:
     1. Identify any unusual patterns or anomalies in this traffic
     2. Classify each anomaly with a severity level (Low, Medium, High)
     3. Explain why each pattern might be concerning
     4. Provide specific recommendations to investigate further
-    
+
     Format your response as a JSON object with the following structure:
     {{
         "anomalies": [
@@ -87,76 +68,46 @@ def detect_anomalies(model, df, features):
         "overall_assessment": "Overall security assessment of this traffic"
     }}
     """
-    
-    # Get response from Gemini
     response = model.generate_content(prompt)
-    
-    # Parse and return the results
     try:
-        # Extract JSON from the response
         response_text = response.text
         json_start = response_text.find('{')
         json_end = response_text.rfind('}') + 1
         json_str = response_text[json_start:json_end]
-        
         results = json.loads(json_str)
         return results
     except Exception as e:
         print(f"Error parsing response: {e}")
         return {"error": "Failed to parse response", "raw_response": response.text}
 
-# Main function to run the analysis
 def analyze_network_traffic(file_path, api_key):
     try:
-        # Initialize the model
         model = init_gemini(api_key)
-        
-        # Load and process data
         df = load_data(file_path)
-        
-        # Extract features
         features = extract_features(df)
-        
-        # Detect anomalies
         results = detect_anomalies(model, df, features)
-        
         return results
     except Exception as e:
         return {"error": str(e)}
 
-# Function to handle real-time input for anomaly detection
 def detect_anomaly_from_input(input_data, api_key):
     try:
-        # Create a temporary file to store the input data
         temp_file = f"temp_traffic_data_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
         with open(temp_file, 'w') as f:
             f.write(input_data)
-        
-        # Analyze the data
         results = analyze_network_traffic(temp_file, api_key)
-        
-        # Clean up temp file
         if os.path.exists(temp_file):
             os.remove(temp_file)
-            
         return results
     except Exception as e:
         return {"error": str(e)}
 
-# Example usage
 if __name__ == "__main__":
-    # Replace with your actual Gemini API key
     GEMINI_API_KEY = 'AIzaSyDRT-RWz1_u1HoYjKf3GAc8GS6uCGt6Ae4'
-    
-    # Example 1: Analyze from file
     results = analyze_network_traffic(r"/content/Midterm_53_group.csv", GEMINI_API_KEY)
-    
-#     # Example 2: Analyze from input string
-#     sample_data = '''"Time","Source","No.","Destination","Protocol","Length","Info"
-# "0.000000","192.167.8.166","1","192.167.255.255","NBNS","92","Name query NB WPAD<00>"
-# "0.784682","192.167.8.166","2","192.167.255.255","NBNS","92","Name query NB WPAD<00>"
-# "1.169060","VMware_8a:5c:e6","3","Broadcast","ARP","60","Who has 192.167.7.175? Tell 192.167.0.1"
-# "2.167949","VMware_8a:5c:e6","4","Broadcast","ARP","60","Who has 192.167.7.175? Tell 192.167.0.1"'''
-    
-#     results = detect_anomaly_from_input(sample_data, GEMINI_API_KEY)
     print(json.dumps(results, indent=2))
+```
+All comments have been removed while preserving the code structure and logic.
+
+---
+Answer from Perplexity: pplx.ai/share
